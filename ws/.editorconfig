@@ -1,0 +1,30 @@
+# EditorConfig is awesome: https://EditorConfig.org
+
+# top-most EditorConfig file
+root = true
+
+[*]
+# Indent using 2 spaces
+indent_style = space
+indent_size = 2
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.ts]
+# TypeScript files
+indent_size = 2
+
+[*.json]
+# JSON files
+indent_size = 2
+quote_type = double
+
+[*.md]
+# Markdown files
+trim_trailing_whitespace = false
+
+[*.{js,json,ts}]
+# Enable ESLint for JavaScript and TypeScript files
+editorconfig_enable = true
