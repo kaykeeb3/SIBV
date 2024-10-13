@@ -1,44 +1,75 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { FaRegCheckCircle } from "react-icons/fa";
 import {
-  AiOutlineCheck,
-  AiOutlineClose,
-  AiOutlineCheckCircle,
-} from "react-icons/ai";
-
-import { MdKeyboardArrowRight, MdKeyboardArrowLeft } from "react-icons/md";
+  MdEdit,
+  MdDelete,
+  MdKeyboardArrowRight,
+  MdKeyboardArrowLeft,
+} from "react-icons/md";
 
 const formatDate = (dateString) => {
   const date = new Date(dateString);
-  return date.toLocaleDateString("pt-BR");
+  return date.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
 };
 
-const getDayOfWeek = (dateString) => {
-  const date = new Date(dateString);
-  const options = { weekday: "long" };
-  return date.toLocaleDateString("pt-BR", options);
-};
-
-export function SchedulingTable({ data, onOpenModal, loading }) {
-  const itemsPerPage = 10; // Itens por página
+export function SchedulingTable({
+  data,
+  onOpenModal,
+  handleDelete,
+  handleReturn,
+}) {
+  const itemsPerPage = 10;
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredData, setFilteredData] = useState(data);
 
-  const totalPages = Math.ceil(data.length / itemsPerPage);
+  useEffect(() => {
+    setFilteredData(data);
+  }, [data]);
 
-  // Calcula os itens a serem exibidos na página atual
+  useEffect(() => {
+    const results = data.filter((item) =>
+      item.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredData(results);
+    setCurrentPage(1); // Resetar a página ao buscar
+  }, [searchTerm, data]);
+
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = data.slice(indexOfFirstItem, indexOfLastItem);
+  const currentItems = filteredData.slice(indexOfFirstItem, indexOfLastItem);
+
+  const getStatusColor = (dayDiff) => {
+    if (dayDiff < 0) return "text-red-500"; // Atrasado
+    if (dayDiff === 0) return "text-yellow-500"; // Devolução Hoje
+    return "text-green-500"; // Dentro do prazo
+  };
+
+  const handleReturnClick = (id) => {
+    handleReturn(id);
+    // Atualiza a lista filtrada removendo o item devolvido
+    setFilteredData((prev) => prev.filter((item) => item.id !== id));
+  };
 
   return (
     <div className="w-full max-w-6xl bg-white rounded-lg shadow-lg overflow-hidden">
-      {loading ? (
-        <div className="p-6 animate-pulse">
-          <div className="h-4 bg-gray-200 rounded mb-4"></div>
-          <div className="h-4 bg-gray-200 rounded mb-4"></div>
-          <div className="h-4 bg-gray-200 rounded mb-4"></div>
-          <div className="h-4 bg-gray-200 rounded mb-4"></div>
-        </div>
+      <div className="p-4">
+        <input
+          type="text"
+          placeholder="Pesquisar por nome"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition duration-200"
+        />
+      </div>
+      {filteredData.length === 0 ? (
+        <div className="p-6 text-center">Nenhum agendamento encontrado.</div>
       ) : (
         <motion.table
           className="min-w-full divide-y divide-zinc-300"
@@ -55,6 +86,7 @@ export function SchedulingTable({ data, onOpenModal, loading }) {
                 "Data de Devolução",
                 "Dia da Semana",
                 "Status",
+                "Tipo",
                 "Propriedade",
                 "Ações",
               ].map((header) => (
@@ -68,41 +100,65 @@ export function SchedulingTable({ data, onOpenModal, loading }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-300">
-            {currentItems.map((item) => (
-              <tr key={item.id} className="hover:bg-zinc-100 transition-colors">
-                <td className="px-4 py-4 text-sm">{item.nomeResponsavel}</td>
-                <td className="px-4 py-4 text-sm">{item.quantidade}</td>
-                <td className="px-4 py-4 text-sm">
-                  {formatDate(item.dataInicio)}
-                </td>
-                <td className="px-4 py-4 text-sm">
-                  {formatDate(item.dataDevolucao)}
-                </td>
-                <td className="px-4 py-4 text-sm">
-                  {getDayOfWeek(item.dataInicio)}
-                </td>
-                <td className="px-4 py-4 text-sm">
-                  {item.status ? (
-                    <AiOutlineCheck className="text-green-500" />
-                  ) : (
-                    <AiOutlineClose className="text-red-500" />
-                  )}
-                </td>
-                <td className="px-4 py-4 text-sm">
-                  <button>
-                    <AiOutlineCheckCircle className="text-green-500 text-xl" />
-                  </button>
-                </td>
-                <td className="px-4 py-4 text-sm">
-                  <button
-                    onClick={() => onOpenModal(item)}
-                    className="text-zinc-900 hover:text-zinc-700"
-                  >
-                    ...
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {currentItems.map((item, index) => {
+              const today = new Date();
+              const returnDate = new Date(item.returnDate);
+              const dayDiff = Math.ceil(
+                (returnDate - today) / (1000 * 60 * 60 * 24)
+              );
+              const statusColor = getStatusColor(dayDiff);
+
+              return (
+                <tr
+                  key={`${item.equipmentId}-${index}`}
+                  className="hover:bg-zinc-100 transition-colors"
+                >
+                  <td className="px-4 py-4 text-sm">{item.name}</td>
+                  <td className="px-4 py-4 text-sm">{item.quantity}</td>
+                  <td className="px-4 py-4 text-sm">
+                    {formatDate(item.startDate)}
+                  </td>
+                  <td className="px-4 py-4 text-sm">
+                    {formatDate(item.returnDate)}
+                  </td>
+                  <td className="px-4 py-4 text-sm">{item.weekDay}</td>
+                  <td className={`px-6 py-4 text-sm ${statusColor}`}>
+                    {dayDiff < 0
+                      ? "Atrasado"
+                      : dayDiff === 0
+                      ? "Devolução Hoje"
+                      : `${dayDiff} dia(s) restante(s)`}
+                  </td>
+                  <td className="px-4 py-4 text-sm">{item.type}</td>
+                  <td className="px-4 py-4 text-center">
+                    <button
+                      onClick={() => handleReturnClick(item.id)}
+                      className="text-green-500"
+                    >
+                      <FaRegCheckCircle
+                        className={`text-xl ${
+                          item.returned ? "text-gray-500" : "text-green-500"
+                        }`}
+                      />
+                    </button>
+                  </td>
+                  <td className="px-4 py-4 text-sm flex space-x-2">
+                    <button
+                      onClick={() => onOpenModal(item)}
+                      className="text-zinc-600 hover:text-zinc-800"
+                    >
+                      <MdEdit className="inline text-xl text-green-500" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(item.id)}
+                      className="text-red-600 hover:text-red-800"
+                    >
+                      <MdDelete className="inline text-xl text-red-500" />
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </motion.table>
       )}
@@ -112,7 +168,6 @@ export function SchedulingTable({ data, onOpenModal, loading }) {
             {currentPage > 1 && (
               <button
                 onClick={() => setCurrentPage(currentPage - 1)}
-                disabled={currentPage === 1}
                 className="px-3 py-1 text-gray-800 rounded border border-gray-400 hover:bg-gray-200 transition-colors"
               >
                 <MdKeyboardArrowLeft />
@@ -142,7 +197,6 @@ export function SchedulingTable({ data, onOpenModal, loading }) {
             {currentPage < totalPages && (
               <button
                 onClick={() => setCurrentPage(currentPage + 1)}
-                disabled={currentPage === totalPages}
                 className="px-3 py-1 text-gray-800 rounded border border-gray-400 hover:bg-gray-200 transition-colors"
               >
                 <MdKeyboardArrowRight />
