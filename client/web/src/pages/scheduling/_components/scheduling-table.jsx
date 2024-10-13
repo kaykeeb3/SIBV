@@ -77,11 +77,12 @@ export function SchedulingTable({
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
         >
-          <thead className="bg-zinc-700 text-zinc-100">
+          <thead className="bg-gray-800 text-white">
             <tr>
               {[
                 "Nome do Responsável",
                 "Quantidade",
+                "Equipamento ID", // Nova coluna
                 "Data de Início",
                 "Data de Devolução",
                 "Dia da Semana",
@@ -92,7 +93,7 @@ export function SchedulingTable({
               ].map((header) => (
                 <th
                   key={header}
-                  className="px-4 py-3 text-left text-sm font-medium"
+                  className="px-6 py-3 text-left text-sm font-semibold"
                 >
                   {header}
                 </th>
@@ -114,7 +115,13 @@ export function SchedulingTable({
                   className="hover:bg-zinc-100 transition-colors"
                 >
                   <td className="px-4 py-4 text-sm">{item.name}</td>
-                  <td className="px-4 py-4 text-sm">{item.quantity}</td>
+                  <td className="px-4 py-4 text-sm text-center">
+                    {item.quantity}
+                  </td>
+                  <td className="px-4 py-4 text-sm text-center">
+                    {item.equipmentId}
+                  </td>{" "}
+                  {/* Nova coluna */}
                   <td className="px-4 py-4 text-sm">
                     {formatDate(item.startDate)}
                   </td>
