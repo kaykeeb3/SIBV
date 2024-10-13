@@ -17,6 +17,19 @@ export function EquipmentTable({ data, onOpenModal, onDelete, loading }) {
     setFilteredData(data);
   }, [data]);
 
+  useEffect(() => {
+    const term = searchTerm.toLowerCase();
+    const filtered = data.filter((item) => {
+      return (
+        item.name.toLowerCase().includes(term) ||
+        item.id.toString().includes(term) ||
+        item.type.toLowerCase().includes(term)
+      );
+    });
+    setFilteredData(filtered);
+    setCurrentPage(1); // Resetar a página ao buscar
+  }, [searchTerm, data]);
+
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -28,22 +41,6 @@ export function EquipmentTable({ data, onOpenModal, onDelete, loading }) {
     }
   };
 
-  const handleSearch = (e) => {
-    const term = e.target.value.toLowerCase();
-    setSearchTerm(term);
-    setCurrentPage(1);
-
-    const filtered = data.filter((item) => {
-      return (
-        item.name.toLowerCase().includes(term) ||
-        item.id.toString().includes(term) ||
-        item.type.toLowerCase().includes(term)
-      );
-    });
-
-    setFilteredData(filtered);
-  };
-
   return (
     <div className="w-full max-w-6xl bg-white rounded-lg shadow-lg overflow-hidden">
       <div className="p-4">
@@ -51,7 +48,7 @@ export function EquipmentTable({ data, onOpenModal, onDelete, loading }) {
           type="text"
           placeholder="Pesquisar por nome, ID ou tipo"
           value={searchTerm}
-          onChange={handleSearch}
+          onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition duration-200"
         />
       </div>
