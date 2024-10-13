@@ -21,14 +21,15 @@ export function Scheduling() {
   const [errors, setErrors] = useState({});
   const [category, setCategory] = useState("Todos");
   const [schedules, setSchedules] = useState([]);
+  const [filteredSchedules, setFilteredSchedules] = useState([]);
 
   useEffect(() => {
     const fetchSchedules = async () => {
       try {
         const data = await SchedulesService.getAllSchedules();
-        // Filtra os agendamentos que não foram devolvidos
         const activeSchedules = data.filter((schedule) => !schedule.returned);
         setSchedules(activeSchedules);
+        setFilteredSchedules(activeSchedules); // Inicializa com todos os ativos
       } catch (error) {
         console.error("Erro ao buscar agendamentos:", error);
       }
@@ -36,6 +37,16 @@ export function Scheduling() {
 
     fetchSchedules();
   }, []);
+
+  useEffect(() => {
+    if (category === "Todos") {
+      setFilteredSchedules(schedules);
+    } else {
+      setFilteredSchedules(
+        schedules.filter((schedule) => schedule.type === category)
+      );
+    }
+  }, [category, schedules]);
 
   const handleOpenModal = (item) => {
     setSelectedItem(item);
@@ -60,7 +71,6 @@ export function Scheduling() {
         selectedItem.id,
         updatedData
       );
-      // Atualiza o estado, mas filtra novamente para não mostrar os devolvidos
       const updatedSchedules = schedules
         .map((schedule) =>
           schedule.id === selectedItem.id ? updatedSchedule : schedule
@@ -68,6 +78,7 @@ export function Scheduling() {
         .filter((schedule) => !schedule.returned);
 
       setSchedules(updatedSchedules);
+      setFilteredSchedules(updatedSchedules); // Atualiza os agendamentos filtrados
       alert("Agendamento atualizado com sucesso!");
       handleCloseModal();
     } catch (error) {
@@ -84,10 +95,12 @@ export function Scheduling() {
 
     try {
       await SchedulesService.deleteSchedule(id);
-      // Atualiza o estado, filtrando os agendamentos devolvidos
       setSchedules((prev) =>
         prev.filter((schedule) => schedule.id !== id && !schedule.returned)
       );
+      setFilteredSchedules((prev) =>
+        prev.filter((schedule) => schedule.id !== id && !schedule.returned)
+      ); // Atualiza os agendamentos filtrados
       alert("Agendamento excluído com sucesso!");
     } catch (error) {
       console.error("Erro ao excluir o agendamento:", error);
@@ -105,10 +118,12 @@ export function Scheduling() {
       const updatedSchedule = await SchedulesService.updateSchedule(id, {
         returned: true,
       });
-      // Atualiza o estado, filtrando os devolvidos
       setSchedules((prev) =>
         prev.filter((schedule) => schedule.id !== id && !schedule.returned)
       );
+      setFilteredSchedules((prev) =>
+        prev.filter((schedule) => schedule.id !== id && !schedule.returned)
+      ); // Atualiza os agendamentos filtrados
       alert("Equipamento devolvido com sucesso!");
     } catch (error) {
       console.error("Erro ao devolver equipamento:", error);
@@ -125,7 +140,7 @@ export function Scheduling() {
         toggleDropdown={() => setIsOpen((prev) => !prev)}
       />
       <SchedulingTable
-        data={schedules}
+        data={filteredSchedules}
         onOpenModal={handleOpenModal}
         handleDelete={handleDelete}
         handleReturn={handleReturn}

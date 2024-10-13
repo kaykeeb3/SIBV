@@ -1,12 +1,13 @@
 import { IoFilterSharp } from "react-icons/io5";
 
-export function FilterDropdown({
-  isOpen,
-  toggleDropdown,
-  setCategory,
-  category,
-}) {
-  const options = ["Todos", "Televisão", "Projetor", "Periféricos"];
+export function FilterDropdown({ isOpen, toggleDropdown, setCategory }) {
+  const options = [
+    "Todos",
+    "Televisão",
+    "Projetor",
+    "Periféricos",
+    "Informática",
+  ];
 
   return (
     <div className="flex items-center justify-end w-full max-w-6xl mb-4 gap-3">
@@ -16,7 +17,7 @@ export function FilterDropdown({
           className="flex items-center rounded-md px-3 py-1 bg-blue-700 hover:bg-blue-800 transition duration-200 text-zinc-100 text-sm"
         >
           <IoFilterSharp className="text-xs mr-1" />
-          Filtrar: {category}
+          Filtrar
         </button>
         {isOpen && (
           <div className="absolute left-0 mt-1 w-56 bg-blue-700 rounded-md shadow-lg z-10">
@@ -26,7 +27,7 @@ export function FilterDropdown({
                   key={option}
                   onClick={() => {
                     setCategory(option);
-                    toggleDropdown();
+                    toggleDropdown(); // Fecha o dropdown após selecionar a opção
                   }}
                   className="px-4 py-2 text-zinc-100 hover:bg-blue-800 cursor-pointer transition duration-200"
                 >
