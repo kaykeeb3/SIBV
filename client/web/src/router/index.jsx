@@ -9,7 +9,7 @@ import { RegisterEquipment } from "../pages/registrations/equipments/create-equi
 import { Equipment } from "../pages/equipment/equipment";
 import { RegisterScheduling } from "../pages/registrations/schedulings/create-schedulings";
 import { Scheduling } from "../pages/scheduling/scheduling";
-import { Support } from "../pages/support/support";
+import { Appointments } from "../pages/appointments/appointments";
 
 export const Router = createBrowserRouter([
   {
@@ -53,8 +53,8 @@ export const Router = createBrowserRouter([
         element: <RegisterEquipment />,
       },
       {
-        path: "/suporte",
-        element: <Support />,
+        path: "/agenda",
+        element: <Appointments />,
       },
     ],
   },
