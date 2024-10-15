@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { z } from "zod";
-import { SchedulesService } from "../../../services/schedules/schedules";
+import { SchedulesService } from "../../../services/schedules/schedules"; // Ajuste o caminho conforme necessário
 
+// Definindo as validações com Zod
 const schema = z.object({
   name: z.string().min(1, { message: "Nome é obrigatório" }),
   quantity: z
@@ -13,7 +14,10 @@ const schema = z.object({
   returnDate: z
     .string()
     .nonempty({ message: "Data de Devolução é obrigatória" }),
-  dayOfWeek: z.string().min(1, { message: "Dia da Semana é obrigatório" }),
+  dayOfWeek: z.enum(
+    ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"],
+    { message: "Dia da Semana inválido" }
+  ),
   equipmentId: z
     .string()
     .regex(/^\d+$/, { message: "ID do Equipamento deve ser um número" })
@@ -57,20 +61,7 @@ export function RegisterScheduling() {
         quantity: result.data.quantity,
         startDate: new Date(result.data.startDate).toISOString(),
         returnDate: new Date(result.data.returnDate).toISOString(),
-        weekDay:
-          result.data.dayOfWeek === "Segunda"
-            ? "Monday"
-            : result.data.dayOfWeek === "Terça"
-            ? "Tuesday"
-            : result.data.dayOfWeek === "Quarta"
-            ? "Wednesday"
-            : result.data.dayOfWeek === "Quinta"
-            ? "Thursday"
-            : result.data.dayOfWeek === "Sexta"
-            ? "Friday"
-            : result.data.dayOfWeek === "Sábado"
-            ? "Saturday"
-            : "Sunday",
+        weekDay: result.data.dayOfWeek,
         equipmentId: result.data.equipmentId,
         type: result.data.type,
       };
@@ -79,6 +70,7 @@ export function RegisterScheduling() {
         const response = await SchedulesService.createSchedule(schedulingData);
         console.log("Agendamento cadastrado com sucesso:", response);
         setErrors({});
+        // Limpa os dados do formulário
         setFormData({
           name: "",
           quantity: "",
@@ -188,14 +180,16 @@ export function RegisterScheduling() {
                 errors.dayOfWeek ? "border-red-500" : ""
               }`}
             >
-              <option value="">Selecione...</option>
+              <option value="" disabled>
+                Selecione um dia
+              </option>
+              <option value="Domingo">Domingo</option>
               <option value="Segunda">Segunda</option>
               <option value="Terça">Terça</option>
               <option value="Quarta">Quarta</option>
               <option value="Quinta">Quinta</option>
               <option value="Sexta">Sexta</option>
               <option value="Sábado">Sábado</option>
-              <option value="Domingo">Domingo</option>
             </select>
             {errors.dayOfWeek && (
               <p className="text-red-500 text-sm mt-1">{errors.dayOfWeek}</p>
@@ -223,19 +217,16 @@ export function RegisterScheduling() {
 
           <div>
             <label className="block font-medium text-gray-700">Tipo</label>
-            <select
+            <input
+              type="text"
               name="type"
               value={formData.type}
               onChange={handleChange}
               className={`mt-1 block w-full p-2 border border-gray-300 rounded-md ${
                 errors.type ? "border-red-500" : ""
               }`}
-            >
-              <option value="">Selecione...</option>
-              <option value="Audiovisual">Audiovisual</option>
-              <option value="Informática">Informática</option>
-              <option value="Periféricos">Periféricos</option>
-            </select>
+              placeholder="Digite o tipo"
+            />
             {errors.type && (
               <p className="text-red-500 text-sm mt-1">{errors.type}</p>
             )}

@@ -10,12 +10,25 @@ import {
 
 const formatDate = (dateString) => {
   const date = new Date(dateString);
-  return date.toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
+  date.setHours(date.getHours() + 3);
+  return date.toLocaleDateString("pt-BR");
 };
+
+// Função corrigida para obter o dia da semana em português
+const getWeekDay = (dateString) => {
+  const date = new Date(dateString);
+  if (isNaN(date)) return ""; // Verifica se a data é inválida
+
+  // Ajusta a hora para o fuso horário desejado (UTC-3)
+  date.setHours(date.getHours() + 3);
+
+  const options = { weekday: "long", timeZone: "America/Sao_Paulo" };
+  return date.toLocaleDateString("pt-BR", options);
+};
+
+// Exemplo de uso
+const dateStr = "2024-10-15T00:00:00Z"; // Data em formato ISO
+console.log(getWeekDay(dateStr)); // Saída: "terça-feira"
 
 export function SchedulingTable({
   data,
@@ -120,15 +133,16 @@ export function SchedulingTable({
                   </td>
                   <td className="px-4 py-4 text-sm text-center">
                     {item.equipmentId}
-                  </td>{" "}
-                  {/* Nova coluna */}
+                  </td>
                   <td className="px-4 py-4 text-sm">
                     {formatDate(item.startDate)}
                   </td>
                   <td className="px-4 py-4 text-sm">
                     {formatDate(item.returnDate)}
                   </td>
-                  <td className="px-4 py-4 text-sm">{item.weekDay}</td>
+                  <td className="px-4 py-4 text-sm">
+                    {getWeekDay(item.returnDate)}
+                  </td>
                   <td className={`px-6 py-4 text-sm ${statusColor}`}>
                     {dayDiff < 0
                       ? "Atrasado"
