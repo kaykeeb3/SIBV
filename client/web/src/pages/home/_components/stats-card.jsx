@@ -3,210 +3,197 @@ import { motion } from "framer-motion";
 import Chart from "react-apexcharts";
 
 export function StatsCard({
-  livrosCount,
-  emprestimosCount,
-  equipamentosCount,
-  agendamentosCount,
-  additionalData = [],
+  bookCount,
+  loanCount,
+  equipmentCount,
+  scheduleCount,
+  loanTrend,
+  loans = [],
+  schedules = [],
 }) {
-  // Configurações do gráfico de barras
-  const chartOptionsBar = {
+  const overdueLoansCount = loans.filter(
+    (loan) => new Date(loan.returnDate) < new Date()
+  ).length;
+
+  const overdueSchedulesCount = schedules.filter(
+    (schedule) => new Date(schedule.returnDate) < new Date()
+  ).length;
+
+  // Cálculo de devoluções por curso/série
+  const returnCounts = loans.reduce(
+    (acc, loan) => {
+      const { seriesCourse } = loan;
+
+      // Contagem por curso/série
+      acc.seriesCount[seriesCourse] = (acc.seriesCount[seriesCourse] || 0) + 1;
+
+      return acc;
+    },
+    { seriesCount: {} }
+  );
+
+  const topCourseByReturns = Object.entries(returnCounts.seriesCount).sort(
+    (a, b) => b[1] - a[1]
+  )[0] || ["N/A", 0];
+
+  const chartOptionsPie = {
+    chart: {
+      type: "pie",
+      toolbar: { show: false },
+      background: "#ffffff",
+    },
+    labels: ["Livros", "Empréstimos", "Equipamentos", "Agendamentos"],
+    colors: ["#4a90e2", "#7ed321", "#d0021b", "#f8e71c"],
+    tooltip: {
+      theme: "dark",
+      style: {
+        fontSize: "14px",
+      },
+    },
+  };
+
+  const chartDataPie = {
+    series: [bookCount, loanCount, equipmentCount, scheduleCount],
+  };
+
+  const chartOptionsGroupedBar = {
     chart: {
       type: "bar",
       toolbar: { show: false },
-      background: "#f9fafb",
+      background: "#ffffff",
     },
     xaxis: {
-      categories: ["Livros", "Empréstimos", "Equipamentos", "Agendamentos"],
+      categories: loanTrend.map((data) => data.label),
+      labels: {
+        style: {
+          colors: "#4b5563",
+          fontSize: "16px",
+          fontWeight: "600",
+        },
+      },
     },
     plotOptions: {
       bar: {
         horizontal: false,
         endingShape: "rounded",
+        columnWidth: "50%",
+        dataLabels: {
+          position: "top",
+        },
       },
     },
-    dataLabels: {
-      enabled: true,
-    },
-    colors: ["#3b82f6", "#ef4444", "#34d399", "#fbbf24"], // Azul, Vermelho, Verde, Amarelo
-    grid: {
-      borderColor: "#e5e7eb",
-    },
+    colors: ["#4a90e2", "#7ed321", "#d0021b", "#f8e71c"],
     tooltip: {
-      theme: "dark",
+      shared: true,
+      intersect: false,
     },
   };
 
-  const chartDataBar = {
+  const chartDataGroupedBar = {
     series: [
       {
-        name: "Contagem",
-        data: [
-          livrosCount,
-          emprestimosCount,
-          equipamentosCount,
-          agendamentosCount,
-        ],
+        name: "Livros",
+        data: Array(loanTrend.length).fill(bookCount),
       },
-    ],
-  };
-
-  // Configurações do gráfico de linha
-  const chartOptionsLine = {
-    chart: {
-      type: "line",
-      toolbar: { show: false },
-      background: "#f9fafb",
-    },
-    xaxis: {
-      categories: additionalData.map((data) => data.label || ""),
-    },
-    stroke: {
-      curve: "smooth",
-      width: 2,
-    },
-    colors: ["#34d399"], // Verde
-    grid: {
-      borderColor: "#e5e7eb",
-    },
-    tooltip: {
-      theme: "dark",
-    },
-  };
-
-  const trendData =
-    additionalData.length > 0
-      ? additionalData
-      : [
-          { label: "Jan", value: 20 },
-          { label: "Fev", value: 30 },
-          { label: "Mar", value: 25 },
-          { label: "Abr", value: 35 },
-          { label: "Mai", value: 40 },
-          { label: "Jun", value: 50 },
-        ];
-
-  const chartDataLine = {
-    series: [
       {
-        name: "Tendência",
-        data: trendData.map((data) => data.value || 0),
+        name: "Empréstimos",
+        data: loanTrend.map((data) => data.value),
       },
-    ],
-  };
-
-  // Configurações do gráfico de pizza
-  const chartOptionsPie = {
-    chart: {
-      type: "pie",
-      toolbar: { show: false },
-      background: "#f9fafb",
-    },
-    labels: ["Livros", "Empréstimos", "Equipamentos", "Agendamentos"],
-    colors: ["#3b82f6", "#ef4444", "#34d399", "#fbbf24"], // Azul, Vermelho, Verde, Amarelo
-    tooltip: {
-      theme: "dark",
-    },
-  };
-
-  const chartDataPie = {
-    series: [
-      livrosCount,
-      emprestimosCount,
-      equipamentosCount,
-      agendamentosCount,
-    ],
-  };
-
-  // Configurações do gráfico de área
-  const chartOptionsArea = {
-    chart: {
-      type: "area",
-      toolbar: { show: false },
-      background: "#f9fafb",
-    },
-    xaxis: {
-      categories: trendData.map((data) => data.label || ""),
-    },
-    stroke: {
-      curve: "smooth",
-      width: 2,
-    },
-    colors: ["#fbbf24"], // Amarelo
-    grid: {
-      borderColor: "#e5e7eb",
-    },
-    tooltip: {
-      theme: "dark",
-    },
-  };
-
-  const chartDataArea = {
-    series: [
       {
-        name: "Área Acumulada",
-        data: trendData.map((data) => data.value || 0),
+        name: "Agendamentos",
+        data: Array(loanTrend.length).fill(scheduleCount),
+      },
+      {
+        name: "Equipamentos",
+        data: Array(loanTrend.length).fill(equipmentCount),
       },
     ],
   };
 
   return (
-    <div className="flex flex-col items-center justify-center w-full">
+    <div className="flex flex-col items-center justify-center w-full mt-10">
       <motion.div
-        className="bg-zinc-100 p-6 rounded-lg shadow-lg w-full md:w-4/5"
+        className="bg-white p-8 rounded-lg shadow-lg w-full md:w-4/5"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          {/* Gráfico de Contagem (Barras) */}
-          <div className="w-full">
-            <h3 className="text-2xl font-semibold text-gray-800 mb-4">
-              Gráfico de Contagem
-            </h3>
-            <Chart
-              options={chartOptionsBar}
-              series={chartDataBar.series}
-              type="bar"
-              height={400}
-            />
-          </div>
-          {/* Gráfico de Tendência (Linhas) */}
-          <div className="w-full">
-            <h3 className="text-2xl font-semibold text-gray-800 mb-4">
+        <h2 className="text-3xl font-bold text-gray-800 mb-6 text-left">
+          Estatísticas de Recursos
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-6">
+          {[
+            {
+              label: "Livros",
+              count: bookCount,
+              borderColor: "border-blue-500",
+            },
+            {
+              label: "Empréstimos",
+              count: loanCount,
+              borderColor: "border-green-500",
+            },
+            {
+              label: "Equipamentos",
+              count: equipmentCount,
+              borderColor: "border-red-500",
+            },
+            {
+              label: "Agendamentos",
+              count: scheduleCount,
+              borderColor: "border-yellow-500",
+            },
+            {
+              label: "Empréstimos Atrasados",
+              count: overdueLoansCount,
+              borderColor: "border-orange-600",
+            },
+            {
+              label: "Agendamentos Atrasados",
+              count: overdueSchedulesCount,
+              borderColor: "border-indigo-500",
+            },
+            // Card para Curso/Série que Devolveu Mais Livros
+            {
+              label: "Curso/Série que Devolveu Mais Livros",
+              count: `${topCourseByReturns[0]}: ${topCourseByReturns[1]} devoluções`,
+              borderColor: "border-purple-500",
+            },
+          ].map(({ label, count, borderColor }, index) => (
+            <div
+              key={`${label}-${index}`}
+              className={`flex flex-col items-center justify-center p-4 bg-gray-50 hover:bg-gray-100 rounded-lg shadow-md ${borderColor} border-b-8 text-center`}
+            >
+              <h3 className="text-3xl font-semibold text-gray-800 text-center mb-1">
+                {count}
+              </h3>
+              <span className="text-gray-600">{label}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div className="bg-gray-50 p-6 rounded-lg shadow">
+            <h3 className="text-xl font-bold mb-4 text-center">
               Tendência de Dados
             </h3>
             <Chart
-              options={chartOptionsLine}
-              series={chartDataLine.series}
-              type="line"
-              height={400}
+              options={chartOptionsGroupedBar}
+              series={chartDataGroupedBar.series}
+              type="bar"
+              height={350}
             />
           </div>
-
-          {/* Gráfico de Pizza */}
-          <div className="w-full">
-            <h3 className="text-2xl font-semibold text-gray-800 mb-4">
-              Proporção de Categorias
+          <div className="bg-gray-50 p-6 rounded-lg shadow">
+            <h3 className="text-xl font-bold mb-4 text-center">
+              Uso dos Recursos
             </h3>
             <Chart
               options={chartOptionsPie}
               series={chartDataPie.series}
               type="pie"
-              height={400}
-            />
-          </div>
-
-          {/* Gráfico de Área */}
-          <div className="w-full">
-            <h3 className="text-2xl font-semibold text-gray-800 mb-4">
-              Área Acumulada de Dados
-            </h3>
-            <Chart
-              options={chartOptionsArea}
-              series={chartDataArea.series}
-              type="area"
-              height={400}
+              height={350}
             />
           </div>
         </div>

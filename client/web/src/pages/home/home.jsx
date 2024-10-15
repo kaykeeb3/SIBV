@@ -1,41 +1,103 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { Menu } from "../home/_components/menu";
 import { Loading } from "../home/_components/loading";
 import { StatsCard } from "../home/_components/stats-card";
+import { HomeService } from "../../services/home/home";
+import moment from "moment";
+import "moment/locale/pt-br";
 
 export function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [statsCounts, setStatsCounts] = useState({
-    livrosCount: 0,
-    emprestimosCount: 0,
-    equipamentosCount: 0,
-    agendamentosCount: 0,
+    bookCount: 0,
+    loanCount: 0,
+    equipmentCount: 0,
+    scheduleCount: 0,
   });
+  const [loanTrend, setLoanTrend] = useState([]);
+  const [usageData, setUsageData] = useState([]);
+  const [loans, setLoans] = useState([]);
+  const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        const endpoints = [
-          "https://sibi-api.vercel.app/livros",
-          "https://sibi-api.vercel.app/emprestimos",
-          "https://sibi-api.vercel.app/equipamentos",
-          "https://sibi-api.vercel.app/agendamentos",
-        ];
+      setLoading(true);
 
-        const responses = await Promise.all(
-          endpoints.map((url) => axios.get(url))
+      try {
+        const [books, loansData, equipments, schedulesData] = await Promise.all(
+          [
+            HomeService.getAllBooks(),
+            HomeService.getAllRequests(),
+            HomeService.getAllEquipments(),
+            HomeService.getAllSchedules(),
+          ]
         );
 
+        // Dados para os contadores
         setStatsCounts({
-          livrosCount: responses[0].data.length,
-          emprestimosCount: responses[1].data.length,
-          equipamentosCount: responses[2].data.length,
-          agendamentosCount: responses[3].data.length,
+          bookCount: books.length,
+          loanCount: loansData.length,
+          equipmentCount: equipments.length,
+          scheduleCount: schedulesData.length,
         });
+
+        // Atualiza as listas de empréstimos e agendamentos
+        setLoans(loansData);
+        setSchedules(schedulesData);
+
+        // Tendência de empréstimos
+        const loanTrendData = loansData.reduce((acc, loan) => {
+          const month = moment(loan.startDate).locale("pt-br").format("MMM");
+          acc[month] = (acc[month] || 0) + 1;
+          return acc;
+        }, {});
+
+        setLoanTrend(
+          Object.entries(loanTrendData).map(([label, value]) => ({
+            label,
+            value,
+          }))
+        );
+
+        // Dados para uso ao longo do tempo
+        const usageByMonth = loansData.reduce((acc, loan) => {
+          const month = moment(loan.startDate).locale("pt-br").format("MMM");
+          acc[month] = acc[month] || { books: 0, loans: 0, equipments: 0 };
+          acc[month].loans += 1;
+          return acc;
+        }, {});
+
+        books.forEach((book) => {
+          const month = moment(book.createdAt).locale("pt-br").format("MMM");
+          usageByMonth[month] = usageByMonth[month] || {
+            books: 0,
+            loans: 0,
+            equipments: 0,
+          };
+          usageByMonth[month].books += 1;
+        });
+
+        equipments.forEach((equipment) => {
+          const month = moment(equipment.createdAt)
+            .locale("pt-br")
+            .format("MMM");
+          usageByMonth[month] = usageByMonth[month] || {
+            books: 0,
+            loans: 0,
+            equipments: 0,
+          };
+          usageByMonth[month].equipments += 1;
+        });
+
+        setUsageData(
+          Object.entries(usageByMonth).map(([label, data]) => ({
+            label,
+            ...data,
+          }))
+        );
       } catch (error) {
-        console.error("Erro ao buscar dados da API:", error);
+        console.error("Error fetching data:", error);
       } finally {
         setLoading(false);
       }
@@ -44,33 +106,23 @@ export function Home() {
     fetchData();
   }, []);
 
-  const toggleMenu = () => {
-    setIsMenuOpen((prevState) => !prevState);
-  };
+  if (loading) {
+    return <Loading />;
+  }
 
   return (
-    <>
-      <Menu
-        isOpen={isMenuOpen}
-        toggleMenu={toggleMenu}
-        livrosCount={statsCounts.livrosCount}
-        emprestimosCount={statsCounts.emprestimosCount}
-        equipamentosCount={statsCounts.equipamentosCount}
-        agendamentosCount={statsCounts.agendamentosCount}
+    <div className="flex flex-col items-center">
+      <Menu isOpen={isMenuOpen} setIsOpen={setIsMenuOpen} />
+      <StatsCard
+        bookCount={statsCounts.bookCount}
+        loanCount={statsCounts.loanCount}
+        equipmentCount={statsCounts.equipmentCount}
+        scheduleCount={statsCounts.scheduleCount}
+        loanTrend={loanTrend}
+        usageData={usageData}
+        loans={loans}
+        schedules={schedules}
       />
-
-      <div className="flex items-center justify-center flex-col py-5 w-full">
-        {loading ? (
-          <Loading />
-        ) : (
-          <StatsCard
-            livrosCount={statsCounts.livrosCount}
-            emprestimosCount={statsCounts.emprestimosCount}
-            equipamentosCount={statsCounts.equipamentosCount}
-            agendamentosCount={statsCounts.agendamentosCount}
-          />
-        )}
-      </div>
-    </>
+    </div>
   );
 }
