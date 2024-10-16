@@ -67,19 +67,18 @@ export function Login({ onLogin }) {
     <>
       <motion.div
         className="flex justify-center items-center h-screen"
-        id="background"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1 }}
       >
         <motion.div
-          className="w-full max-w-md bg-white p-8 rounded-lg shadow-lg"
+          className="w-full max-w-md bg-white p-8 rounded-lg shadow-xl"
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.5, duration: 0.5 }}
         >
           <div className="mb-10">
-            <h1 className="text-2xl font-semibold text-left text-gray-800">
+            <h1 className="text-3xl font-semibold text-left text-gray-800">
               Conecte-se <br />
               <span className="text-base font-medium text-gray-600">
                 Seja bem-vindo(a) novamente
@@ -102,7 +101,7 @@ export function Login({ onLogin }) {
               value={credentials.email}
               onChange={handleInputChange}
               aria-label="Email"
-              className={`w-full border font-normal text-gray-800 rounded-md p-2 bg-gray-100 border-gray-300 focus:outline-none focus:border-blue-500 mb-1 ${
+              className={`w-full border font-normal text-gray-800 rounded-md p-3 bg-gray-50 border-gray-300 focus:outline-none focus:border-blue-500 mb-1 transition duration-300 ease-in-out ${
                 errors.email ? "border-red-500" : ""
               }`}
             />
@@ -127,14 +126,14 @@ export function Login({ onLogin }) {
                 value={credentials.password}
                 onChange={handleInputChange}
                 aria-label="Senha"
-                className={`w-full border font-normal text-gray-800 rounded-md p-2 bg-gray-100 border-gray-300 focus:outline-none focus:border-blue-500 mb-1 ${
+                className={`w-full border font-normal text-gray-800 rounded-md p-3 bg-gray-50 border-gray-300 focus:outline-none focus:border-blue-500 mb-1 transition duration-300 ease-in-out ${
                   errors.password ? "border-red-500" : ""
                 }`}
               />
               <button
                 type="button"
                 onClick={() => setIsPasswordVisible(!isPasswordVisible)}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 focus:outline-none"
                 aria-label={
                   isPasswordVisible ? "Ocultar senha" : "Mostrar senha"
                 }
@@ -153,22 +152,21 @@ export function Login({ onLogin }) {
 
           <motion.button
             onClick={onLoginHandler}
-            disabled={isLoading} // Desabilita o botão se isLoading for true
-            className={`bg-blue-500 text-white py-2 rounded-md w-full hover:bg-blue-600 transition duration-300 ${
+            disabled={isLoading}
+            className={`bg-blue-600 text-white py-2 rounded-md w-full hover:bg-blue-700 transition duration-300 ${
               isLoading ? "opacity-50 cursor-not-allowed" : ""
             }`}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            {isLoading ? "Carregando..." : "Login"}{" "}
-            {/* Exibe texto de carregamento */}
+            {isLoading ? "Carregando..." : "Login"}
           </motion.button>
           <div className="pt-3 text-xs text-right">
             <a
               href="https://api.whatsapp.com/send?phone=88994013479"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-gray-600 underline"
+              className="text-gray-600 underline hover:text-blue-600 transition duration-200"
             >
               Esqueci minha senha
             </a>
