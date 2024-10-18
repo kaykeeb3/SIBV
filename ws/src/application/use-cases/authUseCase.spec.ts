@@ -1,98 +1,96 @@
+import { Request, Response } from "express";
+import { AuthController } from "@/interfaces/http/controllers/authController";
 import * as authUseCase from "@/application/use-cases/authUseCase";
-import { UserRepository } from "@/infra/repositories/userRepository";
-import { hashPassword, comparePassword } from "@/shared/utils/hashPassword";
-import { generateToken } from "@/shared/utils/tokenManager";
-import { UserDTO, LoginDTO } from "@/application/dtos/userDTO";
+import { verifyToken } from "@/shared/utils/tokenManager";
 
-jest.mock("@/infra/repositories/userRepository");
-jest.mock("@/shared/utils/hashPassword");
+jest.mock("@/application/use-cases/authUseCase");
 jest.mock("@/shared/utils/tokenManager");
 
-describe("Auth Use Case", () => {
-  const mockUser = {
-    id: 1,
-    email: "user@example.com",
-    password: "hashedPassword",
-    name: "User Name",
-    institution: "Institution",
-    limit: 10,
-    role: "USER",
-    phone: "123456789",
-    profilePicture: "profile.png",
-  };
+describe("Auth Controller", () => {
+  let req: Partial<Request>;
+  let res: Partial<Response>;
+  const authController = new AuthController();
 
   beforeEach(() => {
+    req = {};
+    res = {
+      json: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+    };
     jest.clearAllMocks();
   });
 
   it("should register a user", async () => {
-    (hashPassword as jest.Mock).mockResolvedValue("hashedPassword");
-    (UserRepository.prototype.createUser as jest.Mock).mockResolvedValue(
-      mockUser
-    );
-
-    const userData: UserDTO = {
+    req.body = {
+      name: "User Name",
       email: "user@example.com",
       password: "123456",
-      name: "User Name",
       institution: "Institution",
       limit: 10,
       role: "USER",
-      phone: "123456789",
-      profilePicture: "profile.png",
     };
-
-    const result = await authUseCase.registerUser(userData);
-
-    expect(hashPassword).toHaveBeenCalledWith("123456");
-    expect(UserRepository.prototype.createUser).toHaveBeenCalledWith({
-      ...userData,
-      password: "hashedPassword",
+    (authUseCase.registerUser as jest.Mock).mockResolvedValue({
+      id: 1,
+      email: "user@example.com",
     });
-    expect(result).toEqual(mockUser);
+
+    await authController.register(req as Request, res as Response);
+
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.json).toHaveBeenCalledWith({
+      user: { id: 1, email: "user@example.com" },
+    });
   });
 
-  it("should login a user and return a token", async () => {
-    (UserRepository.prototype.getUserByEmail as jest.Mock).mockResolvedValue(
-      mockUser
-    );
-    (comparePassword as jest.Mock).mockResolvedValue(true);
-    (generateToken as jest.Mock).mockReturnValue("jwt-token");
+  it("should login a user", async () => {
+    req.body = { email: "user@example.com", password: "123456" };
+    (authUseCase.loginUser as jest.Mock).mockResolvedValue("jwt-token");
 
-    const loginData: LoginDTO = {
-      email: "user@example.com",
-      password: "123456",
-    };
+    await authController.login(req as Request, res as Response);
 
-    const token = await authUseCase.loginUser(loginData);
-
-    expect(UserRepository.prototype.getUserByEmail).toHaveBeenCalledWith(
-      "user@example.com"
-    );
-    expect(comparePassword).toHaveBeenCalledWith("123456", mockUser.password);
-    expect(token).toEqual("jwt-token");
+    expect(res.json).toHaveBeenCalledWith({ token: "jwt-token" });
   });
 
-  it("should return null for invalid login credentials", async () => {
-    (UserRepository.prototype.getUserByEmail as jest.Mock).mockResolvedValue(
-      mockUser
-    );
-    (comparePassword as jest.Mock).mockResolvedValue(false);
+  it("should return 401 for invalid credentials", async () => {
+    req.body = { email: "user@example.com", password: "wrong_password" };
+    (authUseCase.loginUser as jest.Mock).mockResolvedValue(null);
 
-    const loginData: LoginDTO = {
-      email: "user@example.com",
-      password: "wrong_password",
+    await authController.login(req as Request, res as Response);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({ error: "Invalid credentials" });
+  });
+
+  it("should verify access and return user details based on token", async () => {
+    req.headers = { authorization: "Bearer jwt-token" };
+    (verifyToken as jest.Mock).mockReturnValue({ id: 1 });
+
+    const mockUserDetails = {
+      name: "User Name",
+      role: "USER",
+      profilePicture:
+        "https://img.freepik.com/fotos-gratis/pessoa-de-origem-indiana-se-divertindo_23-2150285283.jpg?size=626&ext=jpg&ga=GA1.1.2008272138.1728259200&semt=ais_hybridg",
     };
-
-    const token = await authUseCase.loginUser(loginData);
-
-    expect(UserRepository.prototype.getUserByEmail).toHaveBeenCalledWith(
-      "user@example.com"
+    (authUseCase.getUserDetails as jest.Mock).mockResolvedValue(
+      mockUserDetails
     );
-    expect(comparePassword).toHaveBeenCalledWith(
-      "wrong_password",
-      mockUser.password
-    );
-    expect(token).toBeNull(); // Espera-se que o token seja null
+
+    await authController.verifyAccess(req as Request, res as Response);
+
+    expect(verifyToken).toHaveBeenCalledWith("jwt-token");
+    expect(authUseCase.getUserDetails).toHaveBeenCalledWith(1);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(mockUserDetails);
+  });
+
+  it("should return 401 if token is invalid", async () => {
+    req.headers = { authorization: "Bearer invalid-token" };
+    (verifyToken as jest.Mock).mockReturnValue(null);
+
+    await authController.verifyAccess(req as Request, res as Response);
+
+    expect(verifyToken).toHaveBeenCalledWith("invalid-token");
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({ error: "Invalid token" });
   });
 });

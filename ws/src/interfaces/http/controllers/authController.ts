@@ -1,5 +1,9 @@
 import { Request, Response } from "express";
-import { registerUser, loginUser } from "@/application/use-cases/authUseCase";
+import {
+  registerUser,
+  loginUser,
+  getUserDetails,
+} from "@/application/use-cases/authUseCase";
 import { LoginDTO, UserDTO } from "@/application/dtos/userDTO";
 import { verifyToken } from "@/shared/utils/tokenManager";
 
@@ -30,7 +34,7 @@ export class AuthController {
     }
   }
 
-  verifyAccess(req: Request, res: Response) {
+  async verifyAccess(req: Request, res: Response) {
     const token = req.headers["authorization"]?.split(" ")[1];
 
     if (!token) {
@@ -43,11 +47,22 @@ export class AuthController {
       return res.status(401).json({ error: "Invalid token" });
     }
 
-    res.status(200).json({ message: "Access granted", userId: decoded.id });
+    try {
+      // Pega os detalhes do usuário pelo ID do token
+      const user = await getUserDetails(decoded.id);
+
+      res.status(200).json({
+        name: user.name,
+        role: user.role,
+        profilePicture: user.profilePicture,
+      });
+    } catch (error) {
+      res.status(404).json({ error: "User not found" });
+    }
   }
 
   private handleError(res: Response, error: any) {
-    const status = error.status || 400; // Default to 400 for validation errors
+    const status = error.status || 400;
     const message = error.message || "Internal Server Error";
     res.status(status).json({ error: message });
   }

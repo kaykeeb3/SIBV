@@ -1,19 +1,21 @@
 import { Request, Response } from "express";
 import { AuthController } from "@/interfaces/http/controllers/authController";
 import * as authUseCase from "@/application/use-cases/authUseCase";
+import { verifyToken } from "@/shared/utils/tokenManager";
 
 jest.mock("@/application/use-cases/authUseCase");
+jest.mock("@/shared/utils/tokenManager");
 
 describe("Auth Controller", () => {
-  let req: Partial<Request>; // Usar Partial para permitir adicionar apenas o que é necessário
-  let res: Partial<Response>; // Usar Partial para permitir adicionar apenas o que é necessário
+  let req: Partial<Request>;
+  let res: Partial<Response>;
   const authController = new AuthController();
 
   beforeEach(() => {
-    req = {}; // Inicializa req como um objeto vazio
+    req = {};
     res = {
       json: jest.fn(),
-      status: jest.fn().mockReturnThis(), // Retorna 'this' para encadear chamadas
+      status: jest.fn().mockReturnThis(),
     };
     jest.clearAllMocks();
   });
@@ -59,5 +61,36 @@ describe("Auth Controller", () => {
     expect(res.json).toHaveBeenCalledWith({ error: "Invalid credentials" });
   });
 
-  // Adicione mais testes conforme necessário
+  it("should verify access and return user details based on token", async () => {
+    req.headers = { authorization: "Bearer jwt-token" };
+    (verifyToken as jest.Mock).mockReturnValue({ id: 1 });
+
+    const mockUserDetails = {
+      name: "User Name",
+      role: "USER",
+      profilePicture:
+        "https://img.freepik.com/fotos-gratis/pessoa-de-origem-indiana-se-divertindo_23-2150285283.jpg?size=626&ext=jpg&ga=GA1.1.2008272138.1728259200&semt=ais_hybridg",
+    };
+    (authUseCase.getUserDetails as jest.Mock).mockResolvedValue(
+      mockUserDetails
+    );
+
+    await authController.verifyAccess(req as Request, res as Response);
+
+    expect(verifyToken).toHaveBeenCalledWith("jwt-token");
+    expect(authUseCase.getUserDetails).toHaveBeenCalledWith(1);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(mockUserDetails);
+  });
+
+  it("should return 401 if token is invalid", async () => {
+    req.headers = { authorization: "Bearer invalid-token" };
+    (verifyToken as jest.Mock).mockReturnValue(null);
+
+    await authController.verifyAccess(req as Request, res as Response);
+
+    expect(verifyToken).toHaveBeenCalledWith("invalid-token");
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({ error: "Invalid token" });
+  });
 });
