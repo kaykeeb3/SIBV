@@ -1,0 +1,3 @@
+[submodule "client/client/admin"]
+	path = client/client/admin
+	url = https://github.com/kaykeeb3/SIBV.git
