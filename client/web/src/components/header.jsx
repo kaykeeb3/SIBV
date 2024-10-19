@@ -3,7 +3,6 @@ import {
   IoIosArrowDown,
   IoIosArrowUp,
   IoMdClose,
-  IoMdNotificationsOutline,
   IoMdSettings,
 } from "react-icons/io";
 import { motion } from "framer-motion";
@@ -30,38 +29,26 @@ export function Header({ onLogout, isLoginPage, user }) {
   };
 
   const handleSaveProfile = () => {
-    // Aqui você pode implementar a lógica para salvar as informações do perfil
     console.log("Nome:", name);
     console.log("Imagem de perfil:", profilePicture);
-    setIsEditProfileOpen(false); // Fecha o modal de edição
+    setIsEditProfileOpen(false);
   };
 
   return (
-    <header className="bg-white shadow-md border-b border-gray-200 h-16 flex items-center justify-end px-6 md:px-8">
+    <header className="bg-white shadow-sm border-b border-gray-300 h-16 flex items-center justify-end px-6 md:px-8">
       <div className="flex items-center space-x-6">
-        {/* Se o usuário estiver logado, exibe os ícones de notificação e configurações */}
-        {user && (
-          <div className="flex items-center space-x-4">
-            <button
-              className="relative text-gray-600 hover:text-gray-900 transition duration-200"
-              aria-label="Notificações"
-            >
-              <IoMdNotificationsOutline className="text-2xl" />
-              {/* Sinal de notificação */}
-              <span className="absolute top-0 right-0 h-2 w-2 bg-red-600 rounded-full"></span>
-            </button>
+        {/* Ícones de notificação e configurações */}
+        <div className="flex items-center space-x-4">
+          <button
+            className="text-gray-600 hover:text-gray-900 transition duration-200"
+            onClick={() => setIsEditProfileOpen(true)} // Abre o modal de edição de perfil
+            aria-label="Configurações"
+          >
+            <IoMdSettings className="text-2xl" />
+          </button>
+        </div>
 
-            <button
-              className="text-gray-600 hover:text-gray-900 transition duration-200"
-              onClick={() => setIsEditProfileOpen(true)} // Abre o modal de edição de perfil
-              aria-label="Configurações"
-            >
-              <IoMdSettings className="text-2xl" />
-            </button>
-          </div>
-        )}
-
-        {/* Se o usuário não estiver logado, não exibe as informações do perfil */}
+        {/* Perfil do usuário e menu dropdown */}
         {!isLoginPage && user && (
           <div
             className="relative flex items-center gap-3 cursor-pointer"
