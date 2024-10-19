@@ -1,16 +1,15 @@
 import { api } from "../../lib/api";
 
-// Função para fazer login do usuário
 export const loginUser = async (credentials) => {
   try {
-    console.log("Dados enviados para login:", credentials); // Para depuração
+    console.log("Dados enviados para login:", credentials);
     const response = await api.post("/auth/login", {
       email: credentials.email,
       password: credentials.password,
     });
     return response.data; // Certifique-se de que isso inclui o token
   } catch (error) {
-    console.error("Erro durante o login:", error.response?.data); // Para depuração
+    console.error("Erro durante o login:", error.response?.data);
     throw error; // Relança o erro para tratamento no componente
   }
 };
@@ -28,7 +27,7 @@ export const getProfile = async (token) => {
     const { name, role, profilePicture } = response.data;
     return { name, role, profilePicture };
   } catch (error) {
-    console.error("Erro ao obter perfil do usuário:", error.response?.data); // Para depuração
+    console.error("Erro ao obter perfil do usuário:", error.response?.data);
     throw error; // Relança o erro para tratamento no componente
   }
 };
@@ -39,13 +38,8 @@ export const handleLogin = async (credentials, setUser) => {
     const data = await loginUser(credentials);
     const token = data.token;
 
-    // Armazena o token no localStorage
+    // Armazena o token no localStorage para manter o login
     localStorage.setItem("token", token);
-
-    // Remove o token após 30 minutos
-    setTimeout(() => {
-      localStorage.removeItem("token");
-    }, 1800000);
 
     // Obter perfil do usuário
     const profile = await getProfile(token);
@@ -53,7 +47,7 @@ export const handleLogin = async (credentials, setUser) => {
 
     return token; // Retorna o token para o componente
   } catch (error) {
-    console.error("Erro no handleLogin:", error.message); // Para depuração
+    console.error("Erro no handleLogin:", error.message);
     throw error; // Relança o erro para tratamento no componente
   }
 };
