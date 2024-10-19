@@ -1,7 +1,6 @@
 import prisma from "@/infra/prisma/client";
 import { Schedule } from "@/domain/entities/scheduleEntity";
 import { ScheduleDTO } from "@/application/dtos/scheduleDTO";
-import { Equipment } from "@/domain/entities/equipmentEntity";
 
 export class ScheduleRepository {
   async createSchedule(data: ScheduleDTO): Promise<Schedule> {
@@ -53,6 +52,21 @@ export class ScheduleRepository {
     // Verifica se o agendamento já foi devolvido
     if (existingSchedule.returned && data.returned) {
       throw new Error("This schedule has already been returned.");
+    }
+
+    // Se o agendamento está sendo marcado como devolvido
+    if (data.returned) {
+      // Aumenta a quantidade de equipamentos ao devolver
+      await this.updateEquipmentQuantity(
+        existingSchedule.equipmentId,
+        existingSchedule.quantity
+      );
+
+      // Exclui o agendamento do banco de dados
+      await this.deleteSchedule(id);
+
+      // Retorna o agendamento excluído
+      return existingSchedule;
     }
 
     if (existingSchedule.returned !== data.returned && data.returned) {
