@@ -5,6 +5,9 @@ import {
   IoMdClose,
   IoMdSettings,
 } from "react-icons/io";
+
+import { GrConfigure } from "react-icons/gr";
+
 import { motion } from "framer-motion";
 
 export function Header({ onLogout, isLoginPage, user }) {
@@ -39,12 +42,17 @@ export function Header({ onLogout, isLoginPage, user }) {
       <div className="flex items-center space-x-6">
         {/* Ícones de notificação e configurações */}
         <div className="flex items-center space-x-4">
+          <button className="relative text-gray-600 hover:text-gray-900 transition duration-200">
+            <GrConfigure size={20} />
+            <span className="absolute -top-1 right-0 left-5 h-2 w-2 bg-green-600 rounded-full"></span>
+          </button>
+
           <button
             className="text-gray-600 hover:text-gray-900 transition duration-200"
             onClick={() => setIsEditProfileOpen(true)} // Abre o modal de edição de perfil
             aria-label="Configurações"
           >
-            <IoMdSettings className="text-2xl" />
+            <IoMdSettings size={20} />
           </button>
         </div>
 
