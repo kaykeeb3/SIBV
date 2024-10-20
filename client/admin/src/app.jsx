@@ -1,5 +1,12 @@
+import { RouterProvider } from "react-router-dom";
+import { Router } from "./router/index";
+
 import "./app.css";
 
 export function App() {
-  return <div className="bg-black text-white h-screen">olá suporte</div>;
+  return (
+    <div>
+      <RouterProvider router={Router} />
+    </div>
+  );
 }
