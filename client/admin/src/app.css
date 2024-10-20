@@ -1,3 +1,10 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+body {
+  width: 100%;
+  height: 100vh;
+  background-color: #eff6ffc7;
+  font-family: "Ubuntu", system-ui;
+}
